@@ -2,11 +2,14 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
+import { PrismaClient } from '@prisma/client';
 import {
   generateAccessToken,
   generateRefreshToken,
 } from '../utils/jwt';
-import { Role } from '@prisma/client'; // 👈 Import Role enum to use it
+
+// Define the Role enum type based on your Prisma schema
+type Role = 'user' | 'admin';
 
 // ✅ Register Controller
 export const registerUser = async (req: Request, res: Response) => {
@@ -23,7 +26,7 @@ export const registerUser = async (req: Request, res: Response) => {
         name,
         email,
         password: hashed,
-        role: role as Role, // 👈 Cast properly to enum type
+        role: role as Role, // 👈 Using our defined Role type
       },
     });
 
