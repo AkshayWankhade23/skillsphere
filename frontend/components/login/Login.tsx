@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { useLogin } from "@/lib/mutations";
+import { LoginResponse } from "@/types/auth";
 
 const schema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -29,10 +30,38 @@ const Login = () => {
   const mutation = useLogin();
 
   const onSubmit = (data: FormData) => {
+    console.log('Login form submitted:', data);
     mutation.mutate(data, {
-      onSuccess: () => {
-        router.push("/dashboard");
+      onSuccess: (response) => {
+        console.log('Login successful:', response);
+        
+        // Store the access token and user info in localStorage
+        localStorage.setItem('accessToken', response.accessToken);
+        localStorage.setItem('user', JSON.stringify(response.user));
+        
+        // Check the user's role and redirect accordingly
+        const userRole = response.user.role;
+        console.log('User role for redirection:', userRole);
+        
+        // Set a small timeout to ensure localStorage is properly updated
+        setTimeout(() => {
+          // Force navigation with hard redirect for more reliability
+          if (userRole === "admin") {
+            console.log('Redirecting to admin dashboard');
+            window.location.href = "/admin/dashboard";
+          } else if (userRole === "user") {
+            console.log('Redirecting to user dashboard');
+            window.location.href = "/user/dashboard";
+          } else {
+            // Default fallback if role is not recognized
+            console.log('Redirecting to default dashboard');
+            window.location.href = "/dashboard";
+          }
+        }, 100); // Small delay to ensure state is updated
       },
+      onError: (error) => {
+        console.error('Login error:', error);
+      }
     });
   };
 
@@ -108,9 +137,16 @@ const Login = () => {
           </div>
         </form>
         {mutation.isError && (
-          <p className="mt-2 text-center text-sm text-red-600">
-            {mutation.error?.message || "An error occurred during login"}
-          </p>
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-center text-sm text-red-600 font-medium">
+              {mutation.error?.message || "An error occurred during login. Please check your credentials and try again."}
+            </p>
+            {mutation.error && (
+              <p className="text-xs text-red-500 mt-1">
+                Error details: {JSON.stringify(mutation.error)}
+              </p>
+            )}
+          </div>
         )}
       </div>
     </div>
