@@ -30,7 +30,13 @@ const Navbar = () => {
       <div className="flex gap-4 items-center">
         <span>{user.name}</span>
         <button
-          onClick={logout}
+          onClick={async () => {
+            try {
+              await logout();
+            } catch (error) {
+              console.error('Navbar logout error:', error);
+            }
+          }}
           className="px-3 py-1 bg-red-500 rounded hover:bg-red-600"
         >
           Logout

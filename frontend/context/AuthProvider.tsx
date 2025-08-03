@@ -8,7 +8,7 @@ import { User } from '@/types/auth';
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -84,18 +84,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [router]);
 
-  const logout = () => {
-    // Clear user data from localStorage
-    localStorage.removeItem('user');
-    localStorage.removeItem('accessToken');
+  const logout = async (): Promise<void> => {
+    console.log('AuthProvider: Logging out user');
     
-    // Call logout API if needed
-    api.post('/auth/logout')
-      .catch((err: Error) => console.error('Logout error:', err))
-      .finally(() => {
-        setUser(null);
-        router.push('/login');
-      });
+    // Clear user data from localStorage first
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('user');
+      localStorage.removeItem('accessToken');
+    }
+    
+    // Update state immediately
+    setUser(null);
+    
+    try {
+      // Call logout API if needed
+      await api.post('/auth/logout');
+      console.log('AuthProvider: Logout API call successful');
+    } catch (err) {
+      console.error('AuthProvider: Logout API error:', err);
+      // Continue with logout process even if API fails
+    }
+    
+    // Use window.location for a full page refresh/redirect which is more reliable
+    if (typeof window !== 'undefined') {
+      console.log('AuthProvider: Redirecting to login page');
+      window.location.href = '/login';
+    }
   };
 
   return (
