@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes";
 import cookieParser from "cookie-parser";
+import skillRoutes from "./routes/skillRoutes";
 
 dotenv.config();
 const app = express();
@@ -18,7 +19,8 @@ app.use(
 );
 app.use(express.json());
 
-app.use("/api/auth", authRoutes); // 👈 mount routes
+app.use("/api/auth", authRoutes); 
+app.use("/api/skills", skillRoutes); 
 
 app.get("/", (_, res) => res.send("API is running 🚀"));
 

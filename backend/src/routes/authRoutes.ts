@@ -1,3 +1,4 @@
+// authRoutes.ts
 import express from 'express';
 import {
   registerUser,
@@ -9,14 +10,16 @@ import {
   verifyRefreshToken,
   generateAccessToken,
 } from '../utils/jwt';
+import { authenticate } from '../middlewares/authMiddleware';
 
 const router = express.Router();
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);
-router.get('/me', getMe);
+router.get('/me', authenticate, getMe); 
 router.post('/logout', logoutUser);
 
+// refresh token route
 router.post('/refresh', async (req, res) => {
   const token = req.cookies.refreshToken;
   if (!token) return res.status(401).json({ error: 'No refresh token' });
