@@ -1,215 +1,229 @@
-// import React from 'react'
-// import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-// import { Overview } from '@/components/dashboard/overview'
-// import { RecentActivities } from '@/components/dashboard/recent-activities'
+"use client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import {
+  useAddSkill,
+  useDeleteSkill,
+  useUpdateSkill,
+} from "@/lib/user-api/mutations/mutations";
+import { fetchSkills } from "@/lib/user-api/queries/queries";
 
-// const Dashboard = () => {
-//   return (
-//     <div className="flex-1 space-y-4 p-8 pt-6">
-//       <div className="flex items-center justify-between space-y-2">
-//         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-//       </div>
-//       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-//         <Card>
-//           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-//             <CardTitle className="text-sm font-medium">
-//               Total Skills
-//             </CardTitle>
-//             <svg
-//               xmlns="http://www.w3.org/2000/svg"
-//               viewBox="0 0 24 24"
-//               fill="none"
-//               stroke="currentColor"
-//               strokeLinecap="round"
-//               strokeLinejoin="round"
-//               strokeWidth="2"
-//               className="h-4 w-4 text-muted-foreground"
-//             >
-//               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-//             </svg>
-//           </CardHeader>
-//           <CardContent>
-//             <div className="text-2xl font-bold">28</div>
-//             <p className="text-xs text-muted-foreground">
-//               +2 since last month
-//             </p>
-//           </CardContent>
-//         </Card>
-//         <Card>
-//           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-//             <CardTitle className="text-sm font-medium">
-//               Completed Skills
-//             </CardTitle>
-//             <svg
-//               xmlns="http://www.w3.org/2000/svg"
-//               viewBox="0 0 24 24"
-//               fill="none"
-//               stroke="currentColor"
-//               strokeLinecap="round"
-//               strokeLinejoin="round"
-//               strokeWidth="2"
-//               className="h-4 w-4 text-muted-foreground"
-//             >
-//               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-//               <circle cx="9" cy="7" r="4" />
-//               <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-//             </svg>
-//           </CardHeader>
-//           <CardContent>
-//             <div className="text-2xl font-bold">12</div>
-//             <p className="text-xs text-muted-foreground">
-//               +10% from last month
-//             </p>
-//           </CardContent>
-//         </Card>
-//         <Card>
-//           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-//             <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-//             <svg
-//               xmlns="http://www.w3.org/2000/svg"
-//               viewBox="0 0 24 24"
-//               fill="none"
-//               stroke="currentColor"
-//               strokeLinecap="round"
-//               strokeLinejoin="round"
-//               strokeWidth="2"
-//               className="h-4 w-4 text-muted-foreground"
-//             >
-//               <rect width="20" height="14" x="2" y="5" rx="2" />
-//               <path d="M2 10h20" />
-//             </svg>
-//           </CardHeader>
-//           <CardContent>
-//             <div className="text-2xl font-bold">5</div>
-//             <p className="text-xs text-muted-foreground">
-//               +3 since last week
-//             </p>
-//           </CardContent>
-//         </Card>
-//         <Card>
-//           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-//             <CardTitle className="text-sm font-medium">
-//               Completion Rate
-//             </CardTitle>
-//             <svg
-//               xmlns="http://www.w3.org/2000/svg"
-//               viewBox="0 0 24 24"
-//               fill="none"
-//               stroke="currentColor"
-//               strokeLinecap="round"
-//               strokeLinejoin="round"
-//               strokeWidth="2"
-//               className="h-4 w-4 text-muted-foreground"
-//             >
-//               <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-//             </svg>
-//           </CardHeader>
-//           <CardContent>
-//             <div className="text-2xl font-bold">43%</div>
-//             <p className="text-xs text-muted-foreground">
-//               +5% since last month
-//             </p>
-//           </CardContent>
-//         </Card>
-//       </div>
-//       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-//         <Card className="col-span-4">
-//           <CardHeader>
-//             <CardTitle>Your Progress</CardTitle>
-//             <CardDescription>
-//               Track your skill development progress over time
-//             </CardDescription>
-//           </CardHeader>
-//           <CardContent className="pl-2">
-//             {/* Placeholder for chart component */}
-//             <div className="h-[200px] bg-muted rounded-md flex items-center justify-center text-muted-foreground">
-//               Progress Chart
-//             </div>
-//           </CardContent>
-//         </Card>
-//         <Card className="col-span-3">
-//           <CardHeader>
-//             <CardTitle>Recent Activities</CardTitle>
-//             <CardDescription>
-//               You completed 12 tasks this month
-//             </CardDescription>
-//           </CardHeader>
-//           <CardContent>
-//             <div className="space-y-4">
-//               {/* Placeholder for recent activities */}
-//               <div className="flex items-center">
-//                 <div className="mr-4 bg-primary/10 p-2 rounded-full">
-//                   <svg
-//                     xmlns="http://www.w3.org/2000/svg"
-//                     width="24"
-//                     height="24"
-//                     viewBox="0 0 24 24"
-//                     fill="none"
-//                     stroke="currentColor"
-//                     strokeWidth="2"
-//                     strokeLinecap="round"
-//                     strokeLinejoin="round"
-//                     className="h-4 w-4 text-primary"
-//                   >
-//                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-//                   </svg>
-//                 </div>
-//                 <div className="space-y-1">
-//                   <p className="text-sm font-medium leading-none">
-//                     Completed JavaScript Basics
-//                   </p>
-//                   <p className="text-xs text-muted-foreground">
-//                     2 days ago
-//                   </p>
-//                 </div>
-//                 <div className="ml-auto font-medium">+5 points</div>
-//               </div>
-//               <div className="flex items-center">
-//                 <div className="mr-4 bg-primary/10 p-2 rounded-full">
-//                   <svg
-//                     xmlns="http://www.w3.org/2000/svg"
-//                     width="24"
-//                     height="24"
-//                     viewBox="0 0 24 24"
-//                     fill="none"
-//                     stroke="currentColor"
-//                     strokeWidth="2"
-//                     strokeLinecap="round"
-//                     strokeLinejoin="round"
-//                     className="h-4 w-4 text-primary"
-//                   >
-//                     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-//                     <circle cx="9" cy="7" r="4" />
-//                     <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-//                     <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-//                   </svg>
-//                 </div>
-//                 <div className="space-y-1">
-//                   <p className="text-sm font-medium leading-none">
-//                     Started React Fundamentals
-//                   </p>
-//                   <p className="text-xs text-muted-foreground">
-//                     4 days ago
-//                   </p>
-//                 </div>
-//                 <div className="ml-auto font-medium">+2 points</div>
-//               </div>
-//             </div>
-//           </CardContent>
-//         </Card>
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default Dashboard
-
-import React from 'react'
-
-const Dashboard = () => {
-  return (
-    <div>Dashboard</div>
-  )
+interface Skill {
+  id: string;
+  name: string;
+  level: number;
 }
 
-export default Dashboard
+export default function UserDashboard() {
+  const queryClient = useQueryClient();
+  const [newSkill, setNewSkill] = useState({ name: "", level: 1 });
+  const [editingSkill, setEditingSkill] = useState<Skill | null>(null);
+
+  // Fetch skills query
+  const {
+    data: skills,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["skills"],
+    queryFn: fetchSkills,
+    // Add retry logic and handle 401 errors
+    retry: (failureCount, error: any) => {
+      // Don't retry on 401 Unauthorized errors
+      if (error?.response?.status === 401) {
+        return false;
+      }
+      // Retry up to 3 times for other errors
+      return failureCount < 3;
+    },
+  });
+
+  // Add skill mutation
+  const addSkillMutation = useAddSkill();
+
+  // Delete skill mutation
+  const deleteSkillMutation = useDeleteSkill();
+  
+  // Update skill mutation - initialized with null, will be set when user clicks edit
+  const [updateSkillId, setUpdateSkillId] = useState<string | null>(null);
+  const updateSkillMutation = useUpdateSkill(updateSkillId || '');
+
+  // Handle adding a new skill
+  const handleAddSkill = () => {
+    if (!newSkill.name) return; 
+
+    addSkillMutation.mutate(newSkill, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["skills"] });
+        setNewSkill({ name: "", level: 1 });
+      },
+      onError: (error) => {
+        console.error("Error adding skill:", error);
+      },
+    });
+  };
+  
+  // Handle updating a skill
+  const handleUpdateSkill = () => {
+    if (!editingSkill || !editingSkill.name) return;
+    
+    setUpdateSkillId(editingSkill.id);
+    
+    updateSkillMutation.mutate(
+      { name: editingSkill.name, level: editingSkill.level },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["skills"] });
+          setEditingSkill(null); // Exit edit mode
+          setUpdateSkillId(null);
+        },
+        onError: (error) => {
+          console.error("Error updating skill:", error);
+        },
+      }
+    );
+  };
+
+  return (
+    <div className="p-6">
+      <h2 className="text-xl font-bold mb-4">Skill Tracker</h2>
+
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Skill name"
+          value={newSkill.name}
+          onChange={(e) => setNewSkill({ ...newSkill, name: e.target.value })}
+          className="border p-2 mr-2"
+        />
+        <input
+          type="number"
+          min="1"
+          max="10"
+          value={newSkill.level}
+          onChange={(e) =>
+            setNewSkill({ ...newSkill, level: parseInt(e.target.value) })
+          }
+          className="border p-2 w-20 mr-2"
+        />
+        <button
+          onClick={handleAddSkill}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+          disabled={addSkillMutation.isPending || !newSkill.name}
+        >
+          {addSkillMutation.isPending ? "Adding..." : "Add Skill"}
+        </button>
+      </div>
+
+      {isLoading ? (
+        <p>Loading...</p>
+      ) : isError ? (
+        <div className="text-red-500">
+          {error?.response?.status === 401 ? (
+            <div>
+              <p>Authentication error: Please log in again</p>
+              <button
+                onClick={() => (window.location.href = "/login")}
+                className="mt-2 bg-blue-500 text-white px-4 py-2 rounded"
+              >
+                Go to Login
+              </button>
+            </div>
+          ) : (
+            <>Error loading skills: {error?.message || "Unknown error"}</>
+          )}
+        </div>
+      ) : skills?.length === 0 ? (
+        <p className="text-gray-500">
+          No skills added yet. Add your first skill above!
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {skills?.map((skill: Skill) => (
+            <li
+              key={skill.id}
+              className="p-4 border rounded shadow-sm"
+            >
+              {editingSkill && editingSkill.id === skill.id ? (
+                // Edit mode
+                <div className="flex flex-col space-y-2">
+                  <div className="flex space-x-2">
+                    <input
+                      type="text"
+                      value={editingSkill.name}
+                      onChange={(e) =>
+                        setEditingSkill({ ...editingSkill, name: e.target.value })
+                      }
+                      className="border p-2 flex-grow"
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={editingSkill.level}
+                      onChange={(e) =>
+                        setEditingSkill({
+                          ...editingSkill,
+                          level: parseInt(e.target.value),
+                        })
+                      }
+                      className="border p-2 w-20"
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      onClick={() => setEditingSkill(null)}
+                      className="bg-gray-300 text-gray-800 px-4 py-1 rounded"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUpdateSkill}
+                      className="bg-green-500 text-white px-4 py-1 rounded"
+                      disabled={updateSkillMutation.isPending}
+                    >
+                      {updateSkillMutation.isPending ? "Updating..." : "Save"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                // View mode
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="font-medium">{skill.name}</div>
+                    <div>Level: {skill.level}</div>
+                  </div>
+                  <div className="space-x-2">
+                    <button
+                      onClick={() => setEditingSkill(skill)}
+                      className="text-blue-500 hover:text-blue-700"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => {
+                        deleteSkillMutation.mutate(skill.id, {
+                          onSuccess: () => {
+                            queryClient.invalidateQueries({ queryKey: ["skills"] });
+                          },
+                        });
+                      }}
+                      className="text-red-500 hover:text-red-700 ml-2"
+                      disabled={deleteSkillMutation.isPending}
+                    >
+                      {deleteSkillMutation.isPending &&
+                      deleteSkillMutation.variables === skill.id
+                        ? "Deleting..."
+                        : "Delete"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}

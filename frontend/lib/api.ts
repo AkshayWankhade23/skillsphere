@@ -6,6 +6,21 @@ export const api = axios.create({
   withCredentials: true, // important if you're using cookies
 });
 
+// Add a request interceptor to include the auth token in all requests
+api.interceptors.request.use((config) => {
+  // Check if we have a token in localStorage
+  const token = localStorage.getItem('accessToken');
+  
+  // If token exists, add it to the Authorization header
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  
+  return config;
+}, (error) => {
+  return Promise.reject(error);
+});
+
 export const getMe = async () => {
   try {
     // Try to get user data from local storage first
