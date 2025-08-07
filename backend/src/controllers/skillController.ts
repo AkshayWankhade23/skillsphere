@@ -4,7 +4,7 @@ import prisma from '../lib/prisma'; // Adjust path based on your project structu
 // 🟢 GET /api/skills - Get all skills for logged-in user
 export const getSkills = async (req: Request, res: Response) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
 
     const skills = await prisma.skill.findMany({
       where: { userId },
@@ -22,7 +22,7 @@ export const addSkill = async (req: Request, res: Response) => {
   try {
     console.log('Request user:', req.user);
     console.log('Request body:', req.body);
-    const userId = req.user.userId; // Changed from req.user.id to req.user.userId
+    const userId = req.user.id;
     const { name, level } = req.body;
 
     if (!name) {
@@ -53,7 +53,7 @@ export const addSkill = async (req: Request, res: Response) => {
 // 🟢 PUT /api/skills/:id - Update a skill
 export const updateSkill = async (req: Request, res: Response) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { id } = req.params;
     const { name, level } = req.body;
 
@@ -77,7 +77,7 @@ export const updateSkill = async (req: Request, res: Response) => {
 // 🟢 DELETE /api/skills/:id - Delete a skill
 export const deleteSkill = async (req: Request, res: Response) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user.id;
     const { id } = req.params;
 
     const skill = await prisma.skill.findUnique({ where: { id } });
