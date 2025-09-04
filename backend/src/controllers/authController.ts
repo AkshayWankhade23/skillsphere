@@ -61,15 +61,35 @@ export const registerUser = async (req: Request, res: Response) => {
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
+  console.log('Login attempt for email:', email);
+
   try {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) {
+      console.log('User not found for email:', email);
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    console.log('User found:', { id: user.id, email: user.email, hasPassword: !!user.password });
+
+    // Check if user has a password (users created via Google might not have one)
+    if (!user.password) {
+      console.log('User has no password (likely Google user):', email);
+      return res.status(401).json({ error: 'Please use Google sign-in for this account' });
+    }
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ error: 'Invalid password' });
+    console.log('Password match result:', match);
+    
+    if (!match) {
+      console.log('Password mismatch for user:', email);
+      return res.status(401).json({ error: 'Invalid password' });
+    }
 
     const accessToken = generateAccessToken(user.id, user.role);
     const refreshToken = generateRefreshToken(user.id, user.role);
+
+    console.log('Login successful for user:', email);
 
     res
       .cookie('refreshToken', refreshToken, {
@@ -95,7 +115,7 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 };
 
-// authController.ts - inside getMe
+// authController.ts - GetMe controller
 export const getMe = async (req: Request, res: Response) => {
   const userData = (req as any).user;
 
@@ -112,11 +132,42 @@ export const getMe = async (req: Request, res: Response) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        image: user.image // Include Google profile image if available
       },
     });
   } catch (err: any) {
     console.error('❌ GetMe Error:', err);
     res.status(500).json({ error: 'Failed to fetch user' });
+  }
+};
+  
+// Google OAuth callback handler
+export const handleGoogleCallback = async (req: Request, res: Response) => {
+  // User will be attached to the request by Passport
+  const user = req.user as any;
+  
+  if (!user) {
+    return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=authentication-failed`);
+  }
+  
+  try {
+    // Generate tokens
+    const accessToken = generateAccessToken(user.id, user.role);
+    const refreshToken = generateRefreshToken(user.id, user.role);
+    
+    // Set refresh token in cookie
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    });
+    
+    // Redirect to frontend with accessToken
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/google/callback?token=${accessToken}`);
+  } catch (error) {
+    console.error('Google auth callback error:', error);
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=server-error`);
   }
 };
 

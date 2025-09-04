@@ -21,6 +21,48 @@ api.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
+// Add a response interceptor to handle auth errors
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // If the error is due to an expired token (401) and we haven't tried refreshing yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        // Try to refresh the token
+        const refreshResponse = await axios.post('http://localhost:5000/api/auth/refresh', {}, { withCredentials: true });
+        const newToken = refreshResponse.data.accessToken;
+        
+        if (newToken) {
+          // Update the token in localStorage
+          localStorage.setItem('accessToken', newToken);
+          
+          // Update the Authorization header
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          
+          // Retry the original request
+          return axios(originalRequest);
+        }
+      } catch (refreshError) {
+        // If refresh fails, clear auth data and reject
+        console.error('Token refresh failed:', refreshError);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
+        
+        // Redirect to login if we're in a browser environment
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
 export const getMe = async () => {
   try {
     // Try to get user data from local storage first

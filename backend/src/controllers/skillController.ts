@@ -20,8 +20,6 @@ export const getSkills = async (req: Request, res: Response) => {
 // 🟢 POST /api/skills - Add new skill
 export const addSkill = async (req: Request, res: Response) => {
   try {
-    console.log('Request user:', req.user);
-    console.log('Request body:', req.body);
     const userId = req.user.id;
     const { name, level } = req.body;
 

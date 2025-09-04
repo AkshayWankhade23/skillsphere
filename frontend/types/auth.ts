@@ -17,6 +17,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  image?: string | null;
 }
 
 export interface LoginResponse {

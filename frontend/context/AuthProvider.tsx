@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getMe, api } from '@/lib/api';
 import { User } from '@/types/auth';
+import { useSession, signOut } from 'next-auth/react';
 
 type AuthContextType = {
   user: User | null;
@@ -17,14 +18,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        // Check for browser environment before accessing localStorage
-        if (typeof window !== 'undefined') {
-          console.log('AuthProvider: Attempting to fetch user data');
+        // First, check if we have NextAuth session
+        if (session && session.user) {
+          console.log('AuthProvider: Using NextAuth session');
           
+          // Convert NextAuth user to our User type
+          const userData: User = {
+            id: session.user.id || '',
+            name: session.user.name || '',
+            email: session.user.email || '',
+            role: (session.user as any).role || 'user',
+            image: session.user.image || null,
+          };
+          
+          setUser(userData);
+          
+          // Store user data and token in localStorage for consistent access
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('user', JSON.stringify(userData));
+            
+            // If we have an access token from NextAuth, set it for API calls
+            if ((session as any).accessToken) {
+              localStorage.setItem('accessToken', (session as any).accessToken);
+            }
+          }
+          
+          return;
+        }
+        
+        // If no NextAuth session, fall back to previous auth method
+        if (typeof window !== 'undefined') {
           // First check localStorage directly
           const userString = localStorage.getItem('user');
           const token = localStorage.getItem('accessToken');
@@ -33,19 +61,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             try {
               console.log('AuthProvider: Found user in localStorage');
               const userData = JSON.parse(userString);
+              
+              // For now, trust the localStorage data if we have both token and user
+              // This prevents issues when the backend is not available
+              console.log('AuthProvider: Using cached user data');
               setUser(userData);
               return;
+              
+              // Optional: Verify the token is still valid with a quick API call
+              // Commented out to prevent issues when backend is not running
+              /*
+              try {
+                console.log('AuthProvider: Verifying token validity');
+                await api.get('/auth/verify-token');
+                console.log('AuthProvider: Token is valid');
+                setUser(userData);
+                return;
+              } catch (tokenErr) {
+                console.error('AuthProvider: Token validation failed', tokenErr);
+                // Token is invalid, clear it and continue to API call
+                localStorage.removeItem('accessToken');
+                localStorage.removeItem('user');
+              }
+              */
             } catch (e) {
               console.error('AuthProvider: Error parsing user JSON', e);
               // Continue to API call if JSON parsing fails
             }
           }
           
-          // If we get here, we need to call the API
-          console.log('AuthProvider: Calling getMe API');
-          const res = await getMe();
-          console.log('AuthProvider: API response', res);
-          setUser(res.user);
+          // If we get here, we need to call the API only if we have a token
+          const apiToken = localStorage.getItem('accessToken');
+          if (apiToken) {
+            console.log('AuthProvider: Calling getMe API');
+            const res = await getMe();
+            console.log('AuthProvider: API response', res);
+            setUser(res.user);
+          } else {
+            // No authentication available - this is normal for unauthenticated users
+            setUser(null);
+          }
         }
       } catch (err) {
         console.error('Error in auth provider:', err);
@@ -63,7 +118,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    fetchUser();
+    // Only run fetchUser if the session status is no longer loading
+    if (status !== 'loading') {
+      fetchUser();
+    }
     
     // Listen for storage events to sync auth state across tabs
     const handleStorageChange = (event: StorageEvent) => {
@@ -82,10 +140,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       window.addEventListener('storage', handleStorageChange);
       return () => window.removeEventListener('storage', handleStorageChange);
     }
-  }, [router]);
+  }, [router, session, status]);
 
   const logout = async (): Promise<void> => {
     console.log('AuthProvider: Logging out user');
+    // Sign out from NextAuth
+    await signOut({ redirect: false });
     
     // Clear user data from localStorage first
     if (typeof window !== 'undefined') {
